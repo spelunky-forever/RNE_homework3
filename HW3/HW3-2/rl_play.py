@@ -32,6 +32,16 @@ class RewardManager:
         2. If the current frame's index > the previous frame's index, it means progress was made. Return a positive reward
         3. If there is no change, return 0.0.
         """
+
+        if self.prev_observation is None:
+            return 0.0
+
+        prev_idx = self.prev_observation.get("last_checkpoint_index", 0)
+        curr_idx = self.observation.get("last_checkpoint_index", 0)
+
+        if curr_idx > prev_idx:
+            return 10.0 
+            
         return 0.0
 
     def calculate_distance_reward(self):
@@ -47,7 +57,20 @@ class RewardManager:
            - If current_distance > prev_distance (getting farther) -> penalize
         3. If the distance hasn't changed, return 0.0.
         """
-        return 0.0
+
+        if self.prev_observation is None:
+            return 0.0
+        
+        prev_target_vec = self.prev_observation.get("target_position", [0, 0, 0])
+        curr_target_vec = self.observation.get("target_position", [0, 0, 0])
+
+        prev_dist = np.linalg.norm(prev_target_vec)
+        curr_dist = np.linalg.norm(curr_target_vec)
+
+        reward = (prev_dist - curr_dist) * 1.0
+
+
+        return reward
 
     def calculate_survival_reward(self):
         """
@@ -57,6 +80,15 @@ class RewardManager:
         Hints:
         Check if agent's health(agent_health) reaches 0
         """
+
+        if self.observation is None:
+            return 0.0
+        
+        health = self.observation.get("agent_health", 100)
+        
+        if health <= 0:
+            return -10.0
+            
         return 0.0
 
     def calculate_reward(self):
@@ -74,8 +106,17 @@ class RewardManager:
         Return values:
         - total_reward (float): The total score for this frame.
         """
-        # TODO 6: Complete the reward function
-        return 0.0
+        
+        if self.prev_observation is None:
+            return 0.0
+        
+        flag_score = self.calculate_flag_capture_reward()
+        dist_score = self.calculate_distance_reward()
+        survival_score = self.calculate_survival_reward()
+
+        total_reward = flag_score + dist_score + survival_score
+
+        return total_reward
 
 
 class MLPlay:
