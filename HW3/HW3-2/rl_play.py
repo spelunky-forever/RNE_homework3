@@ -237,7 +237,7 @@ class MLPlay:
             print(f"Model saved to {update_path}")
 
     def _predict_action(self, obs):
-        obs_tensor = torch.as_tensor(obs).unsqueeze(0)
+        obs_tensor = torch.as_tensor(obs).unsqueeze(0).to(self.model.device)
         with torch.no_grad():
             action, value, log_prob = self.model.policy(obs_tensor)
         return action.cpu().numpy().flatten(), log_prob.cpu().numpy().flatten(), value.cpu().numpy().flatten()

@@ -3,12 +3,23 @@ import time
 
 import numpy as np
 import torch
+import random
 
 from agent import PPO
 from env_runner import EnvRunner
 from model import PolicyNet, ValueNet
-from multi_env import MultiEnv, make_env
+from multi_env import MultiEnv
+import wrapper
 
+def make_env_fixed(rank, rand_seed=0):
+    def _thunk():
+        # 讓每個平行宇宙擁有絕對獨立的亂數種子
+        seed = rand_seed + rank
+        np.random.seed(seed)
+        random.seed(seed)
+        env = wrapper.PathTrackingEnv()
+        return env
+    return _thunk
 
 def main():
     # TODO 5: Adjust these parameters if needed
@@ -40,7 +51,7 @@ def main():
 
     # Create multiple environments
     # ----------------------------
-    env = MultiEnv([make_env(i, rand_seed=int(time.time())) for i in range(n_env)])
+    env = MultiEnv([make_env_fixed(i, rand_seed=int(time.time())) for i in range(n_env)])
     runner = EnvRunner(env, s_dim, a_dim, n_step, gamma, lamb, device=device)
 
     # Create model
